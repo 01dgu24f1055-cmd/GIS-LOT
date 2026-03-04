@@ -1,19 +1,14 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
 <meta charset="utf-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
-<link rel="stylesheet" href="css/leaflet.css">
-<link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
-<link rel="stylesheet" href="css/qgis2web.css">
-<link rel="stylesheet" href="css/fontawesome-all.min.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
 <style>
 html, body, #map {
-    width: 100%;
     height: 100%;
-    padding: 0;
     margin: 0;
 }
 </style>
@@ -22,51 +17,37 @@ html, body, #map {
 <body>
 <div id="map"></div>
 
-<script src="js/leaflet.js"></script>
-<script src="js/leaflet-hash.js"></script>
-<script src="js/Autolinker.min.js"></script>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
+<!-- GANTI dengan file geojson export Anda -->
 <script src="data/DASHPOLYGONPA12_0.js"></script>
-<script src="data/DASHPOLYGONPA13_1.js"></script>
 
 <script>
 
-// ===============================
-// CREATE MAP
-// ===============================
-var map = L.map('map', {
-    zoomControl: true,
-    maxZoom: 28,
-    minZoom: 1
-}).fitBounds([[2.1026,102.5191],[2.1055,102.5278]]);
+// =============================
+// BUAT MAP
+// =============================
+var map = L.map('map').setView([2.1035, 102.5235], 18);
 
 
-// ===============================
-// BASEMAPS
-// ===============================
-
-// OpenStreetMap
+// =============================
+// BASEMAP
+// =============================
 var osm = L.tileLayer(
     'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    {
-        attribution: '© OpenStreetMap contributors'
-    }
+    { attribution: '© OpenStreetMap contributors' }
 );
 
-// ESRI SATELLITE
 var satellite = L.tileLayer(
     'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    {
-        attribution: 'Tiles © Esri'
-    }
-).addTo(map); // default layer
+    { attribution: 'Tiles © Esri' }
+).addTo(map);
 
 
-// ===============================
-// SAMPLE QGIS2WEB LAYER
-// ===============================
-
-function styleLayer() {
+// =============================
+// STYLE POLYGON
+// =============================
+function stylePolygon() {
     return {
         color: "#000000",
         weight: 1,
@@ -75,26 +56,62 @@ function styleLayer() {
     };
 }
 
-var layer1 = new L.geoJson(json_DASHPOLYGONPA12_0, {
-    style: styleLayer
+
+// =============================
+// LAYER POLYGON
+// =============================
+var polygonLayer = L.geoJSON(json_DASHPOLYGONPA12_0, {
+    style: stylePolygon
 }).addTo(map);
 
 
-// ===============================
-// LAYER CONTROL
-// ===============================
+// =============================
+// LAYER VERTEX (TOTOL)
+// =============================
+var vertexLayer = L.layerGroup();
 
+polygonLayer.eachLayer(function(layer) {
+
+    if (layer.feature.geometry.type === "Polygon") {
+
+        layer.feature.geometry.coordinates[0].forEach(function(coord) {
+
+            var marker = L.circleMarker(
+                [coord[1], coord[0]],
+                {
+                    radius: 4,
+                    color: "#000",
+                    weight: 1,
+                    fillColor: "#ffcc00",
+                    fillOpacity: 1
+                }
+            );
+
+            vertexLayer.addLayer(marker);
+
+        });
+
+    }
+
+});
+
+vertexLayer.addTo(map);
+
+
+// =============================
+// LAYER CONTROL
+// =============================
 L.control.layers(
     {
         "OpenStreetMap": osm,
         "Satellite": satellite
     },
     {
-        "Lot Layer": layer1
+        "Lot Polygon": polygonLayer,
+        "Vertex (Totol)": vertexLayer
     },
     { collapsed: false }
 ).addTo(map);
-
 
 </script>
 </body>
